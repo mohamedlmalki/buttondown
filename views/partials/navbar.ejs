@@ -1,0 +1,35 @@
+<nav style="background-color: #f8f9fa; padding: 10px 20px; border-bottom: 1px solid #e9ecef; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;">
+  <div style="display: flex; gap: 15px; margin-bottom: 5px;">
+    <a href="/" style="text-decoration: none; color: #007bff; font-weight: bold;">Send Email</a>
+    <a href="/subscribe" style="text-decoration: none; color: #007bff; font-weight: bold;">Add Subscriber</a>
+    <a href="/emails" style="text-decoration: none; color: #007bff; font-weight: bold;">View Emails</a>
+  </div>
+
+  <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 5px; margin-bottom: 5px;">
+    <div style="display: flex; align-items: center; gap: 10px;">
+      <label for="apiAccountSelect" style="font-weight: bold; margin-bottom: 0;">API Account:</label>
+      <select id="apiAccountSelect" style="padding: 5px; border-radius: 4px; border: 1px solid #ccc; font-size: 0.9em;">
+        </select>
+      <span id="apiStatusIndicator" class="api-status" style="display: none; font-size: 0.9em;"></span>
+      <button type="button" id="connectButton" style="padding: 5px 10px; background-color: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.9em;">Check Status</button>
+    </div>
+    <div id="apiGuidanceMessage" style="font-size: 0.8em; color: orange; margin-top: 5px; text-align: right; width: 100%; display: none;">
+      Please wait a few seconds after changing accounts before performing actions, to ensure the new API key is fully active.
+    </div>
+  </div>
+</nav>
+
+<style>
+  /* Basic styling for the status indicator */
+  .api-status {
+    padding: 2px 5px;
+    border-radius: 4px;
+    font-weight: bold;
+  }
+  .api-status.connected {
+    color: #28a745; /* Green */
+  }
+  .api-status.disconnected {
+    color: #dc3545; /* Red */
+  }
+</style>

@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Send Buttondown Email</title>
+  <style>
+    body { font-family: Arial, sans-serif; max-width: 700px; margin: 40px auto; }
+    h1 { text-align: center; }
+    label, input, textarea, button { display: block; width: 100%; margin-bottom: 10px; }
+    textarea { resize: vertical; }
+    button { padding: 10px; background-color: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer; }
+    button:hover { background-color: #0056b3; }
+
+    /* Flex container for the body label and preview button */
+    .body-controls {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      margin-bottom: 10px;
+    }
+    .body-controls label {
+      margin-bottom: 0;
+    }
+    .body-controls button {
+      width: auto;
+      margin-bottom: 0;
+      margin-left: 10px;
+      padding: 8px 15px;
+      background-color: #6c757d;
+    }
+    .body-controls button:hover {
+      background-color: #5a6268;
+    }
+
+    /* Modal Styles */
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 1000;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      overflow: auto;
+      background-color: rgba(0,0,0,0.4);
+      justify-content: center;
+      align-items: center;
+    }
+    .modal-content {
+      background-color: #fefefe;
+      margin: auto;
+      padding: 20px;
+      border: 1px solid #888;
+      width: 80%;
+      max-width: 800px;
+      box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2), 0 6px 20px 0 rgba(0,0,0,0.19);
+      position: relative;
+      max-height: 90%;
+      overflow-y: auto;
+    }
+    .close-button {
+      color: #aaa;
+      float: right;
+      font-size: 28px;
+      font-weight: bold;
+      position: absolute;
+      top: 10px;
+      right: 20px;
+      cursor: pointer;
+    }
+    .close-button:hover,
+    .close-button:focus {
+      color: black;
+      text-decoration: none;
+      cursor: pointer;
+    }
+    #previewContent {
+      margin-top: 20px;
+      border: 1px dashed #ccc;
+      padding: 10px;
+      min-height: 50px;
+    }
+  </style>
+</head>
+<body>
+  <%- include('partials/navbar') %>
+
+  <h1>Send Email via Buttondown API</h1>
+  <form action="/send" method="post">
+    <label>Email Subject:<br><input type="text" name="subject" required></label><br><br>
+    
+    <div class="body-controls">
+      <label for="body">Email Body:</label>
+      <button type="button" id="previewButton">Preview</button>
+    </div>
+    <textarea id="body" name="body" rows="10" cols="40" required></textarea><br><br>
+    
+    <label>Tags (comma separated):<br><input type="text" name="tags"></label><br><br>
+    
+    <input type="hidden" name="apiAccount" id="hiddenApiAccount">
+
+    <button type="submit">Send Email</button>
+  </form>
+
+  
+  <div id="emailPreviewModal" class="modal">
+    <div class="modal-content">
+      <span class="close-button">&times;</span>
+      <h2>Email Body Preview</h2>
+      <div id="previewContent"></div>
+    </div>
+  </div>
+
+  <script>
+    // Pass server-side data to client-side JS
+    window.availableApiAccounts = <%- JSON.stringify(apiKeys) %>;
+    window.activeApiAccountName = '<%= activeApiName %>';
+
+    document.addEventListener('DOMContentLoaded', () => {
+      const bodyTextarea = document.getElementById('body');
+      const previewButton = document.getElementById('previewButton');
+      const emailPreviewModal = document.getElementById('emailPreviewModal');
+      const previewContentDiv = document.getElementById('previewContent');
+      const closeButton = document.querySelector('.close-button');
+      const hiddenApiAccountInput = document.getElementById('hiddenApiAccount');
+      // REMOVED: const fromNameInput = document.getElementById('fromNameInput');
+
+      // Set the value of the hidden input field based on the active API account
+      if (hiddenApiAccountInput && window.activeApiAccountName) {
+          hiddenApiAccountInput.value = window.activeApiAccountName;
+      }
+
+      // REMOVED: Fetch and populate From Name logic
+      // const fetchAndSetFromName = async () => { ... };
+      // fetchAndSetFromName();
+
+
+      // Existing Preview Button Logic
+      if (previewButton && emailPreviewModal && bodyTextarea) {
+        previewButton.addEventListener('click', () => {
+          const emailBodyHtml = bodyTextarea.value;
+          previewContentDiv.innerHTML = emailBodyHtml;
+          emailPreviewModal.style.display = 'flex';
+        });
+
+        closeButton.addEventListener('click', () => {
+          emailPreviewModal.style.display = 'none';
+        });
+
+        window.addEventListener('click', (event) => {
+          if (event.target === emailPreviewModal) {
+            emailPreviewModal.style.display = 'none';
+          }
+        });
+      }
+    });
+  </script>
+  <script src="/js/common.js"></script>
+</body>
+</html>

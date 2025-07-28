@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Subscribe</title>
+  <style>
+    body { font-family: Arial, sans-serif; max-width: 700px; margin: 40px auto; }
+    h1 { text-align: center; }
+    label, input, button, select { display: block; width: 100%; margin-bottom: 10px; }
+    button { padding: 10px; background-color: #28a745; color: white; border: none; border-radius: 5px; cursor: pointer; }
+    button:hover { background-color: #218838; }
+    select { padding: 8px; border: 1px solid #ccc; border-radius: 4px; }
+    .message {
+      margin-top: 20px;
+      padding: 10px;
+      border-radius: 5px;
+      font-weight: bold;
+    }
+    .message.success {
+      background-color: #d4edda;
+      color: #155724;
+      border: 1px solid #c3e6cb;
+    }
+    .message.error {
+      background-color: #f8d7da;
+      color: #721c24;
+      border: 1px solid #f5c6fb;
+    }
+    /* Style for refresh button and dropdown layout */
+    .dropdown-controls {
+      display: flex;
+      align-items: flex-end;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+    .dropdown-controls label {
+      margin-bottom: 0;
+    }
+    .dropdown-controls select {
+      flex-grow: 1;
+      margin-bottom: 0;
+    }
+    .dropdown-controls button {
+      width: auto;
+      margin-bottom: 0;
+      padding: 8px 15px;
+      background-color: #007bff;
+    }
+    .dropdown-controls button:hover {
+      background-color: #0056b3;
+    }
+  </style>
+</head>
+<body>
+  <%- include('partials/navbar') %>
+
+  <h1>Subscribe to Newsletter</h1>
+  <form id="subscribeForm"> 
+    <label for="email">Email address</label>
+    <input id="email" name="email" type="email" placeholder="you@example.com" required />
+
+    <label for="tags">Tags (comma separated, optional)</label>
+    <input id="tags" name="tags" type="text" placeholder="marketing, new_user" />
+
+    <div class="dropdown-controls">
+      <label for="emailId" style="flex-grow: 1;">Select an email to send to this subscriber (optional)</label>
+      <select id="emailId" name="emailId">
+        <option value="">Do not send a specific email</option>
+      </select>
+      <button type="button" id="refreshEmailsButton">Refresh</button>
+    </div>
+    
+    <button type="submit">Subscribe</button>
+  </form>
+
+  <div id="responseMessage" class="message"></div> 
+  
+  <script>
+    // Pass server-side data to common.js for API selection
+    window.availableApiAccounts = <%- JSON.stringify(apiKeys) %>;
+    window.activeApiAccountName = '<%= activeApiName %>';
+
+    document.addEventListener('DOMContentLoaded', () => {
+        const emailIdSelect = document.getElementById('emailId');
+        const subscribeForm = document.getElementById('subscribeForm');
+        const responseMessageDiv = document.getElementById('responseMessage');
+        const refreshEmailsButton = document.getElementById('refreshEmailsButton');
+        // REMOVED: const fromNameInput = document.getElementById('fromNameInput');
+        // REMOVED: const hiddenNewsletterId = document.getElementById('hiddenNewsletterId');
+
+        // Function to display messages
+        const displayMessage = (message, type) => {
+            responseMessageDiv.textContent = message;
+            responseMessageDiv.className = `message ${type}`;
+            responseMessageDiv.style.display = 'block';
+        };
+
+        // REMOVED: Function to fetch and populate From Name (fetchAndSetFromName)
+        // const fetchAndSetFromName = async () => { ... };
+
+
+        // Existing function to fetch and populate emails for the dropdown
+        const fetchAndPopulateEmails = async () => {
+            emailIdSelect.innerHTML = '<option value="">Loading emails...</option>';
+            emailIdSelect.disabled = true;
+
+            try {
+                const response = await fetch('/emails', {
+                    headers: {
+                        'Accept': 'application/json'
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const emails = await response.json();
+
+                emailIdSelect.innerHTML = '<option value="">Do not send a specific email</option>'; 
+
+                if (Array.isArray(emails) && emails.length > 0) {
+                    emails.forEach(email => {
+                        const option = document.createElement('option');
+                        option.value = email.id;
+                        option.textContent = email.subject;
+                        emailIdSelect.appendChild(option);
+                    });
+                } else {
+                    const option = document.createElement('option');
+                    option.value = '';
+                    option.textContent = 'No emails found';
+                    option.disabled = true;
+                    emailIdSelect.appendChild(option);
+                }
+            } catch (error) {
+                console.error('Error fetching emails for dropdown:', error);
+                emailIdSelect.innerHTML = '<option value="">Error loading emails</option>';
+                const errorOption = document.createElement('option');
+                errorOption.value = '';
+                errorOption.textContent = 'Error loading emails';
+                errorOption.disabled = true;
+                emailIdSelect.appendChild(errorOption);
+            } finally {
+                emailIdSelect.disabled = false;
+            }
+        };
+
+        // Initial load of Emails for dropdown
+        // REMOVED: fetchAndSetFromName();
+        if (emailIdSelect) {
+            fetchAndPopulateEmails();
+        }
+
+        // Add event listener to the new refresh button
+        if (refreshEmailsButton) {
+            refreshEmailsButton.addEventListener('click', fetchAndPopulateEmails);
+        }
+
+        // Handle form submission via AJAX
+        if (subscribeForm) {
+            subscribeForm.addEventListener('submit', async (event) => {
+                event.preventDefault();
+
+                responseMessageDiv.style.display = 'none';
+
+                const formData = new FormData(subscribeForm);
+                const data = Object.fromEntries(formData.entries());
+
+                // Add the selected API account name to the data sent with the form
+                data.apiAccount = window.activeApiAccountName; 
+
+                try {
+                    const response = await fetch('/subscribe', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(data)
+                    });
+
+                    const result = await response.json();
+
+                    if (response.ok) {
+                        displayMessage(result.message, 'success');
+                        subscribeForm.reset();
+                        // REMOVED: fetchAndSetFromName();
+                        emailIdSelect.value = '';
+                    } else {
+                        displayMessage(result.message || 'An unknown error occurred.', 'error');
+                    }
+                } catch (error) {
+                    console.error('Error submitting form:', error);
+                    displayMessage('Failed to connect to the server. Please try again.', 'error');
+                }
+            });
+        }
+    });
+  </script>
+  <script src="/js/common.js"></script>
+</body>
+</html>
